@@ -1077,23 +1077,31 @@ extension CarPlayService: CPMapTemplateDelegate {
 // MARK: - CPSearchTemplateDelegate
 
 extension CarPlayService: CPSearchTemplateDelegate {
+  private var inputLocale: String { window?.textInputMode?.primaryLanguage ?? "en" }
+
+  /// Searches and pushes the results list. A superseded request reports nil and pushes nothing.
+  private func pushSearchResults(for text: String, completion: (() -> Void)? = nil) {
+    guard let searchService else {
+      completion?()
+      return
+    }
+    searchService.searchText(text, forInputLocale: inputLocale) { [weak self] results in
+      completion?()
+      guard let self, let results else { return }
+      self.pushTemplate(ListTemplateBuilder.buildListTemplate(for: .searchResults(results: results)), animated: true)
+    }
+  }
+
   func searchTemplate(_: CPSearchTemplate, updatedSearchText searchText: String, completionHandler: @escaping ([CPListItem]) -> Void) {
     self.searchText = searchText
-    let locale = window?.textInputMode?.primaryLanguage ?? "en"
-    guard let searchService = searchService else {
+    guard let searchService else {
       completionHandler([])
       return
     }
-    searchService.searchText(self.searchText, forInputLocale: locale, completionHandler: { results in
-      var items = [CPListItem]()
-      for object in results {
-        let item = CPListItem(text: object.title, detailText: object.address)
-        item.userInfo = ListItemInfo(type: CPConstants.ListItemType.searchResults,
-                                     metadata: SearchResultInfo(originalRow: object.originalRow))
-        items.append(item)
-      }
-      completionHandler(items)
-    })
+    // A superseded request reports nil, but CarPlay expects an answer to every text update.
+    searchService.searchText(searchText, forInputLocale: inputLocale) { results in
+      completionHandler((results ?? []).map(ListTemplateBuilder.buildSearchResultItem))
+    }
   }
 
   func searchTemplate(_: CPSearchTemplate, selectedResult item: CPListItem, completionHandler: @escaping () -> Void) {
@@ -1106,15 +1114,7 @@ extension CarPlayService: CPSearchTemplateDelegate {
   }
 
   func searchTemplateSearchButtonPressed(_: CPSearchTemplate) {
-    let locale = window?.textInputMode?.primaryLanguage ?? "en"
-    guard let searchService = searchService else {
-      return
-    }
-    searchService.searchText(searchText, forInputLocale: locale, completionHandler: { [weak self] results in
-      guard let self = self else { return }
-      let template = ListTemplateBuilder.buildListTemplate(for: .searchResults(results: results))
-      self.pushTemplate(template, animated: true)
-    })
+    pushSearchResults(for: searchText)
   }
 }
 
@@ -1255,20 +1255,7 @@ extension CarPlayService {
 
     switch userInfo.type {
     case CPConstants.ListItemType.history:
-      let locale = window?.textInputMode?.primaryLanguage ?? "en"
-      guard let searchService = searchService else {
-        completionHandler()
-        return
-      }
-      searchService.searchText(item.text ?? "", forInputLocale: locale, completionHandler: { [weak self] results in
-        guard let self else {
-          completionHandler()
-          return
-        }
-        let template = ListTemplateBuilder.buildListTemplate(for: .searchResults(results: results))
-        completionHandler()
-        self.pushTemplate(template, animated: true)
-      })
+      pushSearchResults(for: item.text ?? "", completion: completionHandler)
     case CPConstants.ListItemType.bookmarkLists where userInfo.metadata is CategoryInfo:
       let metadata = userInfo.metadata as! CategoryInfo
       let template = ListTemplateBuilder.buildListTemplate(for: .bookmarks(category: metadata.category))
