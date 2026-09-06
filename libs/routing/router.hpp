@@ -52,7 +52,7 @@ public:
   /// Return unique name of a router implementation.
   virtual std::string GetName() const = 0;
 
-  /// Clear all temporary buffers.
+  /// Clear cached routes and reset the selected routing strategy for a new journey.
   virtual void ClearState() = 0;
 
   virtual void SetGuides(GuidesTracks && guides) = 0;
@@ -75,9 +75,8 @@ public:
   virtual bool FindClosestProjectionToRoad(m2::PointD const & point, m2::PointD const & direction, double radius,
                                            EdgeProj & proj) = 0;
 
-  /// Swap the saved last-route state with the alternative's saved state. Called when the user
-  /// picks an alternative variant so a subsequent AdjustRoute (off-route rebuild) adjusts to
-  /// the selected route rather than the original primary. Default: no-op.
+  /// Select the alternative's cached route and routing strategy for subsequent adjustments and
+  /// full rebuilds. Must not overlap CalculateRoute or ClearState. Default: no-op.
   virtual void SwapAltRouteToActive() {}
 };
 

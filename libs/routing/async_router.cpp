@@ -193,11 +193,16 @@ void AsyncRouter::ClearState()
   ResetDelegate();
 }
 
-void AsyncRouter::SwapAltRouteToActive()
+bool AsyncRouter::SwapAltRouteToActive(uint64_t routeId)
 {
   lock_guard ul(m_guard);
-  if (m_router)
-    m_router->SwapAltRouteToActive();
+  // CalculateRoute runs outside m_guard. Its route ID advances before it accesses the router,
+  // so a delivered result with that ID can only be selected after the calculation finishes.
+  if (!m_router || !m_delegateProxy || m_clearState || m_hasRequest || routeId != m_routeCounter)
+    return false;
+
+  m_router->SwapAltRouteToActive();
+  return true;
 }
 
 // static

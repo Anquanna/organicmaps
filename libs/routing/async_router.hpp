@@ -50,8 +50,9 @@ public:
   void SetGuidesTracks(GuidesTracks && guides);
   /// Interrupt routing and clear buffers
   void ClearState();
-  /// Forward to the underlying IRouter. See IRouter::SwapAltRouteToActive.
-  void SwapAltRouteToActive();
+  /// Swap caches and strategy only if |routeId| still identifies the latest calculation and
+  /// no replacement request or reset is pending. Called on the GUI thread for a delivered result.
+  bool SwapAltRouteToActive(uint64_t routeId);
 
   bool FindClosestProjectionToRoad(m2::PointD const & point, m2::PointD const & direction, double radius,
                                    EdgeProj & proj);

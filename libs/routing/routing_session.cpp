@@ -574,6 +574,12 @@ bool RoutingSession::SwapActiveAlternative(size_t idx)
   if (!m_lastResult || idx >= m_lastResult->m_routes.size() || idx == m_lastResult->m_activeIdx)
     return false;
 
+  // A displayed result can outlive its router caches while a replacement is being calculated.
+  // Reject that selection before changing either the followed route or its remembered strategy.
+  CHECK(m_router, ());
+  if (!m_router->SwapAltRouteToActive(m_lastResult->m_routesId))
+    return false;
+
   m_lastResult->m_activeIdx = idx;
   // Promote the newly-active RouteBase to a followed Route, preserving the session's routing settings.
   auto route = std::make_shared<Route>(m_lastResult->GetActive());
@@ -592,8 +598,6 @@ bool RoutingSession::SwapActiveAlternative(size_t idx)
 
   m_speedCameraManager.Reset();
   m_speedCameraManager.SetRoute(m_route);
-  if (m_router)
-    m_router->SwapAltRouteToActive();
   return true;
 }
 

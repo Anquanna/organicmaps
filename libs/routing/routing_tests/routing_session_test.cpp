@@ -8,6 +8,7 @@
 #include "routing/routing_helpers.hpp"
 #include "routing/routing_session.hpp"
 
+#include "geometry/mercator.hpp"
 #include "geometry/point2d.hpp"
 #include "geometry/point_with_altitude.hpp"
 
@@ -29,6 +30,7 @@ using chrono::seconds;
 using chrono::steady_clock;
 
 vector<m2::PointD> kTestRoute = {{0., 1.}, {0., 1.}, {0., 3.}, {0., 4.}};
+vector<m2::PointD> const kTestAltRoute = {{0., 1.}, {0., 1.}, {1., 3.}, {0., 4.}};
 vector<Segment> const kTestSegments = {{0, 0, 0, true}, {0, 0, 1, true}, {0, 0, 2, true}};
 vector<turns::TurnItem> const kTestTurnsReachOnly = {turns::TurnItem(1, turns::CarDirection::None),
                                                      turns::TurnItem(2, turns::CarDirection::None),
@@ -75,6 +77,43 @@ public:
   {
     return false;
   }
+};
+
+// Router returning two route variants and counting the "user picked the other one" notifications.
+class AltRoutesRouter : public IRouter
+{
+public:
+  explicit AltRoutesRouter(size_t & swapCount) : m_swapCount(swapCount) {}
+
+  string GetName() const override { return "alt routes"; }
+  void ClearState() override {}
+  void SetGuides(GuidesTracks && /* guides */) override {}
+  void SwapAltRouteToActive() override { ++m_swapCount; }
+
+  RouterResultCode CalculateRoute(Checkpoints const & /* checkpoints */, m2::PointD const & /* startDirection */,
+                                  bool /* adjust */, RouterDelegate const & /* delegate */,
+                                  RoutesResult & result) override
+  {
+    Route active;
+    active.SetGeometry(kTestRoute.begin(), kTestRoute.end());
+    FillSubroutesInfo(active);
+    result.MakeFrom(GetName(), std::move(active));
+
+    Route alt;
+    alt.SetGeometry(kTestAltRoute.begin(), kTestAltRoute.end());
+    FillSubroutesInfo(alt);
+    result.m_routes.emplace_back(std::move(static_cast<RouteBase &>(alt)));
+    return RouterResultCode::NoError;
+  }
+
+  bool FindClosestProjectionToRoad(m2::PointD const & point, m2::PointD const & direction, double radius,
+                                   EdgeProj & proj) override
+  {
+    return false;
+  }
+
+private:
+  size_t & m_swapCount;
 };
 
 // Router which every next call of CalculateRoute() method return different return codes.
@@ -197,10 +236,8 @@ private:
 
 void FillSubroutesInfo(Route & route, vector<turns::TurnItem> const & turns /* = kTestTurnsReachOnly */)
 {
-  // Build segments from the route's actual polyline points (not the global kTestRoute) so segments
-  // are consistent with the followed polyline. This matters because RouteBase no longer stores
-  // the polyline: promoting a sliced RouteBase back to a Route reconstructs the FollowedPolyline
-  // from segments (subroute.front().GetStart() + each segment's junction).
+  // Promotion from RouteBase reconstructs the followed polyline from the subroute start and
+  // segment junctions, so those must describe the same geometry as the test route.
   auto const & polyPts = route.GetPoly().GetPoints();
 
   vector<geometry::PointWithAltitude> junctions;
@@ -576,9 +613,8 @@ UNIT_CLASS_TEST(AsyncGuiThreadTestWithRoutingSession, TestRouteRebuildingError)
   // Test 1. Leaving the route and returning to the route when state is |SessionState::RouteNeedRebuil|.
   TestLeavingRoute(*m_session, info);
 
-  // Continue moving along the route. Stay short of lat=0.003 so the session stays in OnRoute —
-  // reaching that point would trigger RouteFinished (segments[2] ends there for the 4-point kRoute)
-  // and the subsequent TestLeavingRoute call would not transition out of RouteFinished.
+  // Stay short of the completion threshold so the subsequent TestLeavingRoute can still
+  // transition out of OnRoute.
   {
     SessionStateTest sessionStateTest({SessionState::RouteNeedRebuild, SessionState::OnRoute}, *m_session);
     vector<double> const latitudes = {0.002, 0.0025, 0.0028};
@@ -600,13 +636,87 @@ UNIT_CLASS_TEST(AsyncGuiThreadTestWithRoutingSession, TestRouteRebuildingError)
     TEST(signal.WaitUntil(steady_clock::now() + kRouteBuildingMaxDuration), ("State was not set."));
   }
 
-  // Continue moving along the route until the destination is reached. The first GPS at lat=0.003
-  // already triggers the route-finished check (segments[2] ends there for the 4-point kRoute), so
-  // the state jumps directly RouteRebuilding -> RouteFinished without an intermediate OnRoute.
+  // Cross the completion threshold on the first update, transitioning directly from
+  // RouteRebuilding to RouteFinished.
   {
     SessionStateTest sessionStateTest({SessionState::RouteRebuilding, SessionState::RouteFinished}, *m_session);
     vector<double> const latitudes = {0.003, 0.0035, 0.004};
     TestMovingByUpdatingLat(sessionStateTest, latitudes, info, *m_session);
   }
+}
+
+// Picking an alternative route must reach the router: IndexRouter remembers the chosen variant
+// there and keeps its weights on the next rebuild.
+// https://github.com/organicmaps/organicmaps/issues/13205
+UNIT_CLASS_TEST(AsyncGuiThreadTestWithRoutingSession, TestSwapActiveAlternative)
+{
+  TimedSignal builtSignal;
+  size_t swapCount = 0;
+
+  GetPlatform().RunTask(Platform::Thread::Gui, [&builtSignal, &swapCount, this]()
+  {
+    InitRoutingSession();
+    m_session->SetRouter(make_unique<AltRoutesRouter>(swapCount), nullptr);
+    m_session->SetRoutingCallbacks([&builtSignal](RoutesResult const &, RouterResultCode) {
+      builtSignal.Signal();
+    }, nullptr /* rebuildReadyCallback */, nullptr /* needMoreMapsCallback */, nullptr /* removeRouteCallback */);
+    m_session->BuildRoute(Checkpoints(kTestRoute.front(), kTestRoute.back()), RouterDelegate::kNoTimeout);
+  });
+  TEST(builtSignal.WaitUntil(steady_clock::now() + kRouteBuildingMaxDuration), ("Route was not built."));
+
+  TimedSignal swappedSignal;
+  GetPlatform().RunTask(Platform::Thread::Gui, [&swappedSignal, &swapCount, this]()
+  {
+    TEST(m_session->SwapActiveAlternative(1), ());
+    TEST_EQUAL(swapCount, 1, ());
+
+    // Picking the route which is already active changes nothing.
+    TEST(!m_session->SwapActiveAlternative(1), ());
+    TEST_EQUAL(swapCount, 1, ());
+
+    // Switching back is forwarded just the same.
+    TEST(m_session->SwapActiveAlternative(0), ());
+    TEST_EQUAL(swapCount, 2, ());
+
+    swappedSignal.Signal();
+  });
+  TEST(swappedSignal.WaitUntil(steady_clock::now() + kRouteBuildingMaxDuration), ("Alternative was not swapped."));
+
+  TimedSignal rebuiltSignal;
+  GetPlatform().RunTask(Platform::Thread::Gui, [&rebuiltSignal, &swapCount, this]()
+  {
+    m_session->RebuildRoute(kTestRoute.front(),
+                            [&rebuiltSignal](RoutesResult const &, RouterResultCode code)
+    {
+      TEST_EQUAL(code, RouterResultCode::NoError, ());
+      rebuiltSignal.Signal();
+    }, nullptr /* needMoreMapsCallback */, nullptr /* removeRouteCallback */, RouterDelegate::kNoTimeout,
+                            SessionState::RouteRebuilding, true /* adjust */);
+
+    // GPS can match the displayed route again while the replacement is being calculated;
+    // SessionState alone therefore cannot tell whether the router caches are available.
+    location::GpsInfo info;
+    info.m_latitude = mercator::YToLat(1.5);
+    info.m_longitude = 0.0;
+    info.m_horizontalAccuracy = 5.0;
+    TEST_EQUAL(m_session->OnLocationPositionChanged(info), SessionState::OnRoute, ());
+
+    // The replacement result cannot be delivered until this GUI task returns. Selecting from
+    // the displayed result must not change the caches or strategy used by the routing worker.
+    TEST(!m_session->SwapActiveAlternative(1), ());
+    TEST_EQUAL(swapCount, 2, ());
+    TEST_EQUAL(m_session->GetRoute()->GetPoly().GetPoints(), kTestRoute, ());
+  });
+  TEST(rebuiltSignal.WaitUntil(steady_clock::now() + kRouteBuildingMaxDuration), ("Route was not rebuilt."));
+
+  TimedSignal selectedSignal;
+  GetPlatform().RunTask(Platform::Thread::Gui, [&selectedSignal, &swapCount, this]()
+  {
+    TEST(m_session->SwapActiveAlternative(1), ());
+    TEST_EQUAL(swapCount, 3, ());
+    TEST_EQUAL(m_session->GetRoute()->GetPoly().GetPoints(), kTestAltRoute, ());
+    selectedSignal.Signal();
+  });
+  TEST(selectedSignal.WaitUntil(steady_clock::now() + kRouteBuildingMaxDuration), ("Alternative was not selected."));
 }
 }  // namespace routing_session_test

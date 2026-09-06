@@ -151,8 +151,8 @@ public:
   void AssignRouteForTesting(Route && route, RouterResultCode e);
 
   /// \brief Swap the currently active route to alternative |idx| inside m_lastResult.
-  /// Used when the user taps an alternative ETA balloon. Returns false if the index is out of range
-  /// or already active. The follow state (m_route) is rebuilt from the newly-promoted RouteBase.
+  /// Used when the user taps an alternative ETA balloon. Returns false if the result is stale,
+  /// the index is out of range or already active. Rebuilds m_route from the selected RouteBase.
   bool SwapActiveAlternative(size_t idx);
 
   bool IsSpeedCamLimitExceeded() const { return m_speedCameraManager.IsSpeedLimitExceeded(); }

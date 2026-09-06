@@ -94,13 +94,6 @@ public:
   VehicleType GetVehicleType() const { return m_vehicleType; }
   std::shared_ptr<NumMwmIds> const & GetNumMwmIds() const { return m_numMwmIds; }
 
-  // Test/tuning hook: bias the transit routing weight of walking and transfers.
-  // Used by tests to force a bus over a short walk.
-  void SetTransitAltFactors(double walkFactor, double transferFactor)
-  {
-    m_estimator->SetTransitAltFactors(walkFactor, transferFactor);
-  }
-
   template <class T>
   void SetCurrentTimeGetter(T && getter)
   {
@@ -112,6 +105,9 @@ private:
   // directions engine and data-source handles; does NOT touch m_lastRoute/m_lastAltRoute so the
   // adjust-cache survives between a successful build and a later off-route rebuild.
   void ClearRouteCalculationState();
+
+  // Applies |strategy| to the estimator for the next route build.
+  void SetupEstimator(EdgeEstimator::Strategy strategy);
 
   RouterResultCode CalculateSubrouteJointsMode(IndexGraphStarter & starter, RouterDelegate const & delegate,
                                                std::shared_ptr<AStarProgress> const & progress,
@@ -302,10 +298,11 @@ private:
   // Mirror of the active slots for the alternative route computed in CalculateRoute. Swapped
   // into the active slots by SwapAltRouteToActive when the user selects the alternative, so
   // AdjustRoute on a subsequent off-route rebuild adjusts to the route the user is following.
-  /// @todo Make a vector of alts here or in RoutesResult (preferred).
-  /// A major refactoring is needed, but IndexRouer becomes stateless (is a plus).
   std::unique_ptr<SegmentedRoute> m_lastAltRoute;
   std::unique_ptr<FakeEdgesContainer> m_lastAltFakeEdges;
+  // Preserve the selected road strategy across adjustments and full rebuilds until ClearState.
+  // Transit stays Normal because its alternative weights also consume the pedestrian-time budget.
+  EdgeEstimator::Strategy m_activeStrategy = EdgeEstimator::Strategy::Normal;
 
   // If a ckeckpoint is near to the guide track we need to build route through this track.
   GuidesConnections m_guides;
