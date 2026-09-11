@@ -8,17 +8,36 @@ final class RoutingOptionsSettingsInteractor {
     self.routingOptionsProvider = routingOptionsProvider
   }
 
+  private var canChangeOptimization: Bool {
+    !MWMRouter.isOnRoute() && MWMRouter.type() != .ruler
+  }
+
   func loadSettings() {
-    let state = RoutingOptionsSettingsState(options: routingOptionsProvider())
+    let options = routingOptionsProvider()
+    let state = RoutingOptionsSettingsState(options: options,
+                                            canChangeOptimization: canChangeOptimization,
+                                            routeOptimizationEnabled: options.routeOptimizationEnabled)
     self.state = state
     present(state, animatingDifferences: false)
   }
 
   private func set(_ option: RoutingOption, enabled: Bool) {
-    guard let state else { return }
-    option.setEnabled(enabled, in: state.options)
-    state.options.save()
+    guard var state else { return }
+    guard option != .routeOptimization || canChangeOptimization else { return }
+    if option == .routeOptimization {
+      state.routeOptimizationEnabled = enabled
+    } else {
+      option.setEnabled(enabled, in: state.options)
+      state.options.save()
+    }
+    self.state = state
     present(state, animatingDifferences: false)
+  }
+
+  private func applyOptimization() {
+    guard let state, state.canChangeOptimization, canChangeOptimization,
+          state.routeOptimizationEnabled != state.options.routeOptimizationEnabled else { return }
+    state.options.routeOptimizationEnabled = state.routeOptimizationEnabled
   }
 
   private func present(_ state: RoutingOptionsSettingsState, animatingDifferences: Bool = true) {
@@ -36,6 +55,8 @@ extension RoutingOptionsSettingsInteractor: SettingsViewControllerInteractor {
       loadSettings()
     case .didChangeSwitch(let item, isOn: let isOn):
       set(item, enabled: isOn)
+    case .didDisappear:
+      applyOptimization()
     default:
       break
     }

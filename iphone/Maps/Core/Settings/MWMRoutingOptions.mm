@@ -1,4 +1,5 @@
 #import "MWMRoutingOptions.h"
+#import "MWMSettings.h"
 
 #include "routing/routing_options.hpp"
 
@@ -63,6 +64,16 @@
 - (BOOL)hasOptions
 {
   return self.avoidToll || self.avoidDirty || self.avoidFerry || self.avoidMotorway;
+}
+
+- (BOOL)routeOptimizationEnabled
+{
+  return [MWMSettings routeOptimizationEnabled];
+}
+
+- (void)setRouteOptimizationEnabled:(BOOL)enabled
+{
+  [MWMSettings setRouteOptimizationEnabled:enabled];
 }
 
 - (void)save

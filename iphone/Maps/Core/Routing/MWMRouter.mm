@@ -9,6 +9,7 @@
 #import "MWMNavigationDashboardManager+Entity.h"
 #import "MWMRoutePoint+CPP.h"
 #import "MWMRoutingManager.h"
+#import "MWMSettings.h"
 #import "MWMStorage+UI.h"
 #import "MapsAppDelegate.h"
 #import "SwiftBridge.h"
