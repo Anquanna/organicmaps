@@ -267,6 +267,7 @@
     <string name="type.natural.beach">Sablera</string>
     <string name="type.natural.geyser">Guéiser</string>
     <string name="type.natural.water.river">Ríu</string>
+    <string name="type.natural.water.tunnel">Agua</string>
     <string name="type.natural.water">Agua</string>
     <string name="type.office.ngo">Organización non gubernamental</string>
     <string name="type.office.telecommunication">Operador de telecomunicaciones</string>

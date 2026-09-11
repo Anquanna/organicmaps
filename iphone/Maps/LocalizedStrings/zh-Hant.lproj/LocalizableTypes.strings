@@ -719,6 +719,7 @@
 "type.landuse" = "土地利用";
 "type.landuse.allotments" = "市民農園";
 "type.landuse.basin" = "水庫";
+"type.landuse.basin.intermittent" = "間歇性水庫";
 "type.landuse.brownfield" = "廢棄的工業用地";
 
 /* In most (European) countries, сemeteries are usually independent of places of worship (e.g. military cemeteries), while grave yards are usually the yard of a place of worship. */
@@ -872,6 +873,8 @@
 "type.natural.water.reservoir" = "水庫";
 "type.natural.water.basin" = "水庫";
 "type.natural.water.river" = "河流";
+"type.natural.water.intermittent" = "間歇性水體";
+"type.natural.water.tunnel" = "水體";
 "type.natural.land" = "陸地";
 "type.natural.meadow" = "草甸";
 "type.natural.orchard" = "果園";

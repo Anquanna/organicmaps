@@ -606,6 +606,7 @@
     <string name="type.landuse">Területhasználat</string>
     <string name="type.landuse.allotments">Kiskertek</string>
     <string name="type.landuse.basin">Víztározó</string>
+    <string name="type.landuse.basin.intermittent">Időszakos víztározó</string>
     <string name="type.landuse.brownfield">Barnamezős terület</string>
     <!-- In most (European) countries, сemeteries are usually independent of places of worship (e.g. military cemeteries), while grave yards are usually the yard of a place of worship. -->
     <string name="type.landuse.cemetery">Temető</string>
@@ -744,6 +745,8 @@
     <string name="type.natural.water.reservoir">Víztározó</string>
     <string name="type.natural.water.basin">Vízgyűjtő</string>
     <string name="type.natural.water.river">Folyó</string>
+    <string name="type.natural.water.intermittent">Időszakos vízfelület</string>
+    <string name="type.natural.water.tunnel">Vizek</string>
     <string name="type.natural.land">Föld</string>
     <string name="type.natural.meadow">Rét</string>
     <string name="type.natural.orchard">Gyümölcsöskert</string>
