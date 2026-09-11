@@ -8977,6 +8977,25 @@ type landuse-basin
     area color=c091 priority=-980
   z20
     area color=c091 priority=-980
+type landuse-basin-intermittent
+  z12
+    area color=c091 priority=-975
+  z13
+    area color=c091 priority=-975
+  z14
+    area color=c091 priority=-975
+  z15
+    area color=c091 priority=-975
+  z16
+    area color=c091 priority=-975
+  z17
+    area color=c091 priority=-975
+  z18
+    area color=c091 priority=-975
+  z19
+    area color=c091 priority=-975
+  z20
+    area color=c091 priority=-975
 type landuse-cemetery
   z14
     area color=c092 priority=-1820
@@ -12070,50 +12089,110 @@ type natural-water-basin
     caption primary[height=11 color=c222] priority=2900
 type natural-water-ditch
   z13 if "bbox_area>=4000000"
-    area color=c230 priority=-980
+    area color=c230 priority=-973
   z13 if "bbox_area<4000000"
-    area color=c230 priority=-980
+    area color=c230 priority=-973
   z14
-    area color=c230 priority=-980
+    area color=c230 priority=-973
   z15
-    area color=c230 priority=-980
+    area color=c230 priority=-973
   z16
-    area color=c230 priority=-980
+    area color=c230 priority=-973
   z17
-    area color=c230 priority=-980
+    area color=c230 priority=-973
     caption primary[height=11 color=c222] priority=2900
   z18
-    area color=c230 priority=-980
+    area color=c230 priority=-973
     caption primary[height=11 color=c222] priority=2900
   z19
-    area color=c230 priority=-980
+    area color=c230 priority=-973
     caption primary[height=11 color=c222] priority=2900
   z20
-    area color=c230 priority=-980
+    area color=c230 priority=-973
     caption primary[height=11 color=c222] priority=2900
 type natural-water-drain
   z13 if "bbox_area>=4000000"
-    area color=c230 priority=-980
+    area color=c230 priority=-973
   z13 if "bbox_area<4000000"
-    area color=c230 priority=-980
+    area color=c230 priority=-973
   z14
-    area color=c230 priority=-980
+    area color=c230 priority=-973
   z15
-    area color=c230 priority=-980
+    area color=c230 priority=-973
   z16
-    area color=c230 priority=-980
+    area color=c230 priority=-973
   z17
-    area color=c230 priority=-980
+    area color=c230 priority=-973
     caption primary[height=11 color=c222] priority=2900
   z18
-    area color=c230 priority=-980
+    area color=c230 priority=-973
     caption primary[height=11 color=c222] priority=2900
   z19
-    area color=c230 priority=-980
+    area color=c230 priority=-973
     caption primary[height=11 color=c222] priority=2900
   z20
-    area color=c230 priority=-980
+    area color=c230 priority=-973
     caption primary[height=11 color=c222] priority=2900
+type natural-water-intermittent
+  z1
+    area color=c091 priority=-975
+  z2
+    area color=c091 priority=-975
+  z3
+    area color=c091 priority=-975
+  z4
+    area color=c091 priority=-975
+  z5
+    area color=c091 priority=-975
+  z6
+    area color=c091 priority=-975
+  z7
+    area color=c091 priority=-975
+  z8
+    area color=c091 priority=-975
+  z9
+    area color=c091 priority=-975
+  z10 if "bbox_area>=4000000"
+    area color=c091 priority=-975
+    caption primary[height=9 color=c222] priority=2890
+  z10 if "bbox_area<4000000"
+    area color=c091 priority=-975
+  z11 if "bbox_area>=4000000"
+    area color=c091 priority=-975
+    caption primary[height=9 color=c222] priority=2890
+  z11 if "bbox_area<4000000"
+    area color=c091 priority=-975
+  z12 if "bbox_area>=4000000"
+    area color=c091 priority=-975
+    caption primary[height=9 color=c222] priority=2890
+  z12 if "bbox_area<4000000"
+    area color=c091 priority=-975
+  z13 if "bbox_area>=4000000"
+    area color=c091 priority=-975
+    caption primary[height=9 color=c222] priority=2890
+  z13 if "bbox_area<4000000"
+    area color=c091 priority=-975
+  z14
+    area color=c091 priority=-975
+    caption primary[height=10 color=c222] priority=2890
+  z15
+    area color=c091 priority=-975
+    caption primary[height=10 color=c222] priority=2890
+  z16
+    area color=c091 priority=-975
+    caption primary[height=11 color=c222] priority=2890
+  z17
+    area color=c091 priority=-975
+    caption primary[height=11 color=c222] priority=2890
+  z18
+    area color=c091 priority=-975
+    caption primary[height=11 color=c222] priority=2890
+  z19
+    area color=c091 priority=-975
+    caption primary[height=11 color=c222] priority=2890
+  z20
+    area color=c091 priority=-975
+    caption primary[height=11 color=c222] priority=2890
 type natural-water-lake
   z1
     area color=c091 priority=-980
@@ -12484,30 +12563,30 @@ type natural-water-tunnel
     area color=c231 priority=-980
 type natural-water-wastewater
   z12 if "bbox_area>=4000000"
-    area color=c230 priority=-980
+    area color=c230 priority=-973
   z12 if "bbox_area<4000000"
-    area color=c230 priority=-980
+    area color=c230 priority=-973
   z13 if "bbox_area>=4000000"
-    area color=c230 priority=-980
+    area color=c230 priority=-973
   z13 if "bbox_area<4000000"
-    area color=c230 priority=-980
+    area color=c230 priority=-973
   z14
-    area color=c230 priority=-980
+    area color=c230 priority=-973
   z15
-    area color=c230 priority=-980
+    area color=c230 priority=-973
   z16
-    area color=c230 priority=-980
+    area color=c230 priority=-973
   z17
-    area color=c230 priority=-980
+    area color=c230 priority=-973
     caption primary[height=11 color=c222] priority=2900
   z18
-    area color=c230 priority=-980
+    area color=c230 priority=-973
     caption primary[height=11 color=c222] priority=2900
   z19
-    area color=c230 priority=-980
+    area color=c230 priority=-973
     caption primary[height=11 color=c222] priority=2900
   z20
-    area color=c230 priority=-980
+    area color=c230 priority=-973
     caption primary[height=11 color=c222] priority=2900
 type natural-wetland
   z11
