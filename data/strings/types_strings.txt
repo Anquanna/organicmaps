@@ -26714,6 +26714,9 @@ vi = Sông
 zh-Hans = 河流
 zh-Hant = 河流
 
+[type.natural.water.tunnel]
+ref = type.natural.water
+
 [type.natural.land]
 en = Land
 af = Land
